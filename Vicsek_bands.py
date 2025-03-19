@@ -17,12 +17,12 @@ deltat = 1.0 # time step
 factor = 1.0
 v0 = 0.5 #r0 / deltat * factor # velocity
 iterations = 5000 # animation frames
-eta_values = [0.1, 0.2, 0.3, 0.4, 0.5]
+eta_values = [0.1, 0.2, 0.3, 0.4, 0.5] # noise/randomness
 max_neighbours = N // 2 #  guess a good value, max is N
 
 # initialise positions and angles
 positions = np.random.uniform(0, L, size = (N, 2))
-angles = np.random.uniform(-np.pi, np.pi, size = N) # from 0 to 2pi rad
+angles = np.random.uniform(-np.pi, np.pi, size = N)
 
 # cell list
 cell_size = 1.0 * r0
@@ -31,7 +31,7 @@ total_num_cells = lateral_num_cells ** 2
 max_particles_per_cell = int(rho * cell_size ** 2 * 10)
 
 # average angles and order parameter
-time_step = 10
+time_step = 10 # interval to record data
 angle_time_step = np.empty(time_step)
 angle_t = 0
 average_angles = [] # empty array for average angles
@@ -40,16 +40,16 @@ order_time_step = np.empty(time_step)
 order_t = 0
 order_parameters = [] # empty array for order parameters
 order_data = {} # dictionary for order parameter data for each eta
-block_size = 20
+block_size = 20 # for block averaging
 std_threshold = 0.05 # standard deviation threshold for steady state to be reached
 steady_blocks = 5 # consecutive blocks that meet std_threshold criteria
 
-# histogram for average particle density in different areas of the box
+# histogram for average particle density
 bins = int(L / r0)
 hist, xedges, yedges = np.histogram2d(positions[:,0], positions[:,1], bins = bins, density = False)
 
 # clustering for different noise
-cluster_threshold = r0
+cluster_threshold = r0 # distance to be within same cluster
 num_clusters_list = [] # empty array for number of clusters
 cluster_particles_list = [] # empty array for average num of particles per cluster
 num_clusters_data = {} # dictionary for cluster data for each eta
@@ -230,7 +230,7 @@ def animate(frames, eta):
         order_t += 1
     
     # add particle positions to the histogram once reached steady state
-    if frames >= 500:
+    if frames >= 3000:
         hist += np.histogram2d(positions[:,0], positions[:,1], bins = [xedges, yedges], density = False)[0]
     
     # update cluster arrays
@@ -259,20 +259,19 @@ for eta in eta_values:
     # anim.save("Vicsek_bands.mp4", writer = writer, dpi = 300)
     # plt.show()
     
-    average_angles = [] # initialise average angles array
-    order_parameters = [] # intialise order parameter array
-    
+    # intialise arrays
+    average_angles = []
+    order_parameters = []
     hist = np.empty((len(xedges) - 1, len(yedges) - 1)) # initialise histogram density map
-    
     num_clusters_list = []
     cluster_particles_list = []
 
+    # run animation and update arrays
     for frame in range(0, iterations + 1):
         animate(frame, eta)
         
-        # store alignment for each eta    
+        # store data for each eta    
         alignment_data[eta] = average_angles
-        
         order_data[eta] = order_parameters
         
     steady_reached, steady_time = steady_state(order_parameters)
@@ -281,6 +280,7 @@ for eta in eta_values:
     num_clusters_data[eta] = num_clusters_list
     cluster_particles_data[eta] = cluster_particles_list
     
+    # save to npz files for plotting
     np.savez_compressed(f"plotting_data/bands/avg_ang{int(eta*10)}.npz", angles = np.array(average_angles, dtype = np.float16))
     np.savez_compressed(f"plotting_data/bands/hist{int(eta*10)}.npz", hist = np.array(hist, dtype = np.float64))
     np.savez_compressed(f"plotting_data/bands/order{int(eta*10)}.npz", order = np.array(order_parameters, dtype = np.float16), steady_reached = np.array(steady_reached, dtype = np.bool_), steady_time = np.array(steady_time, dtype = np.float16))
