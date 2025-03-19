@@ -22,7 +22,7 @@ max_neighbours = N // 2 #  guess a good value, max is N
 
 # initialise positions and angles
 positions = np.random.uniform(0, L, size = (N, 2))
-angles = np.random.uniform(-np.pi, np.pi, size = N) # from 0 to 2pi rad
+angles = np.random.uniform(-np.pi, np.pi, size = N)
 
 # cell list
 cell_size = 1.0 * r0
@@ -31,7 +31,7 @@ total_num_cells = lateral_num_cells ** 2
 max_particles_per_cell = int(rho * cell_size ** 2 * 10)
 
 # average angles and order parameter
-time_step = 10
+time_step = 10 # interval to record data
 angle_time_step = np.empty(time_step)
 angle_t = 0
 average_angles = [] # empty array for average angles
@@ -40,16 +40,16 @@ order_time_step = np.empty(time_step)
 order_t = 0
 order_parameters = [] # empty array for order parameters
 order_data = {} # dictionary for order parameter data
-block_size = 20
+block_size = 20 # for block averaging
 std_threshold = 0.05 # standard deviation threshold for steady state to be reached
 steady_blocks = 5 # consecutive blocks that meet std_threshold criteria
 
-# histogram for average particle density in different areas of the box
+# histogram for average particle density
 bins = int(L / r0)
 hist, xedges, yedges = np.histogram2d(positions[:,0], positions[:,1], bins = bins, density = False)
 
 # clustering
-cluster_threshold = r0
+cluster_threshold = r0 # distance to be within same cluster
 num_clusters_list = [] # empty array for number of clusters
 cluster_particles_list = [] # empty array for average num of particles per cluster
 num_clusters_data = {} # dictionary for cluster data
@@ -63,8 +63,10 @@ vxedges = np.linspace(0, 1, bins + 1) # bin edges for meshgrid
 vyedges = np.linspace(0, 1, bins + 1)
 
 # define barrier position and size
-barrier_x_start, barrier_x_end = 15, 35
-barrier_y_start, barrier_y_end = 15, 35
+barrier_x_start, barrier_x_end = 17.5, 32.5 # big 15 x 15 barrier
+barrier_y_start, barrier_y_end = 17.5, 32.5
+# barrier_x_start, barrier_x_end = 22.5, 27.5 # small 5 x 5 barrier
+# barrier_y_start, barrier_y_end = 22.5, 27.5
 
 # barrier collision avoidance
 turnfactor = np.pi/2
@@ -283,7 +285,8 @@ def animate(frames):
         angle_time_step = np.empty(time_step)  # reinitialise array
     else:
         angle_t += 1  # increment t
-        
+    
+    # update order parameter array    
     order_time_step[order_t] = order_parameter(new_angles)
     if order_t == time_step - 1:
         order_parameters.append(np.mean(order_time_step))
@@ -293,7 +296,7 @@ def animate(frames):
         order_t += 1
     
     # add particle positions to the histogram once reached steady state
-    if frames >= 2000:
+    if frames >= 3000:
         hist += np.histogram2d(positions[:,0], positions[:,1], bins = [xedges, yedges], density = False)[0]
     
     if frames % time_step == 0:
@@ -302,7 +305,7 @@ def animate(frames):
         cluster_particles_list.append(cluster_particles)
     
     # calculate velocity fluxes once reached steady state
-    if frames >= 2000:
+    if frames >= 3000:
         tot_vx, tot_vy = velocity_flux(positions, angles, v0)
         
         # histograms for the x and y velocity components
@@ -317,7 +320,8 @@ def animate(frames):
     # Update the quiver plot
     # qv.set_offsets(positions)
     # qv.set_UVC(np.cos(new_angles), np.sin(new_angles), new_angles)
-    np.savez_compressed(f"plotting_data/bands_repulsive/pos_ang{frames}.npz", positions = np.array(positions, dtype = np.float16), angles = np.array(angles, dtype = np.float16))
+    np.savez_compressed(f"plotting_data/bands_repulsivebig/pos_ang{frames}.npz", positions = np.array(positions, dtype = np.float16), angles = np.array(angles, dtype = np.float16)) # big barrier
+    # np.savez_compressed(f"plotting_data/bands_repulsivesmall/pos_ang{frames}.npz", positions = np.array(positions, dtype = np.float16), angles = np.array(angles, dtype = np.float16)) # small barrier
     # return qv,
 
 # Vicsek Model for N Particles Animation
@@ -327,22 +331,21 @@ def animate(frames):
 # ax.add_patch(plt.Rectangle((barrier_x_start - boundary, barrier_y_start - boundary), (barrier_x_end + boundary) - (barrier_x_start - boundary), (barrier_y_end + boundary) - (barrier_y_start - boundary), edgecolor = "grey", fill = False))
 # anim = FuncAnimation(fig, animate, frames = range(0, iterations), interval = 5, blit = True)
 # writer = FFMpegWriter(fps = 10, metadata = dict(artist = "Isobel"), bitrate = 1800)
-# anim.save("Vicsek_bands_repulsive.mp4", writer = writer, dpi = 300)
+# anim.save("Vicsek_bands_repulsivebig.mp4", writer = writer, dpi = 300)
 # plt.show()
 
+# intialise arrays
 average_angles = []
 order_parameters = []
-
 hist = np.empty((len(xedges) - 1, len(yedges) - 1))
-
 num_clusters_list = []
 cluster_particles_list = []
 
+# run animation and update arrays
 for frame in range(0, iterations + 1):
     animate(frame)
     
     alignment_data = average_angles
-    
     order_data = order_parameters
     
 steady_reached, steady_time = steady_state(order_parameters)
@@ -351,8 +354,17 @@ print(f"Steady state reached in {steady_time * 10} frames")
 num_clusters_data = num_clusters_list
 cluster_particles_data = cluster_particles_list
 
-np.savez_compressed(f"plotting_data/bands_repulsive/avg_ang.npz", angles = np.array(average_angles, dtype = np.float16))
-np.savez_compressed(f"plotting_data/bands_repulsive/hist.npz", hist = np.array(hist, dtype = np.float64))
-np.savez_compressed(f"plotting_data/bands_repulsive/flow.npz", vx = np.array(tot_vx_all, dtype = np.float32), vy = np.array(tot_vy_all, dtype = np.float32), counts = np.array(counts_all, dtype = np.float32), vxedges = np.array(vxedges, dtype = np.float32), vyedges = np.array(vyedges, dtype = np.float32))
-np.savez_compressed(f"plotting_data/bands_repulsive/order.npz", order = np.array(order_parameters, dtype = np.float16), steady_reached = np.array(steady_reached, dtype = np.bool_), steady_time = np.array(steady_time, dtype = np.float16))
-np.savez_compressed(f"plotting_data/bands_repulsive/clusters.npz", num_clust = np.array(num_clusters_list, dtype = np.float16), particle_clust = np.array(cluster_particles_list, dtype = np.float16))
+# save to npz files for plotting
+# big barrier
+np.savez_compressed(f"plotting_data/bands_repulsivebig/avg_ang.npz", angles = np.array(average_angles, dtype = np.float16))
+np.savez_compressed(f"plotting_data/bands_repulsivebig/hist.npz", hist = np.array(hist, dtype = np.float64))
+np.savez_compressed(f"plotting_data/bands_repulsivebig/flow.npz", vx = np.array(tot_vx_all, dtype = np.float32), vy = np.array(tot_vy_all, dtype = np.float32), counts = np.array(counts_all, dtype = np.float32), vxedges = np.array(vxedges, dtype = np.float32), vyedges = np.array(vyedges, dtype = np.float32))
+np.savez_compressed(f"plotting_data/bands_repulsivebig/order.npz", order = np.array(order_parameters, dtype = np.float16), steady_reached = np.array(steady_reached, dtype = np.bool_), steady_time = np.array(steady_time, dtype = np.float16))
+np.savez_compressed(f"plotting_data/bands_repulsivebig/clusters.npz", num_clust = np.array(num_clusters_list, dtype = np.float16), particle_clust = np.array(cluster_particles_list, dtype = np.float16))
+
+# small barrier
+# np.savez_compressed(f"plotting_data/bands_repulsivesmall/avg_ang.npz", angles = np.array(average_angles, dtype = np.float16))
+# np.savez_compressed(f"plotting_data/bands_repulsivesmall/hist.npz", hist = np.array(hist, dtype = np.float64))
+# np.savez_compressed(f"plotting_data/bands_repulsivesmall/flow.npz", vx = np.array(tot_vx_all, dtype = np.float32), vy = np.array(tot_vy_all, dtype = np.float32), counts = np.array(counts_all, dtype = np.float32), vxedges = np.array(vxedges, dtype = np.float32), vyedges = np.array(vyedges, dtype = np.float32))
+# np.savez_compressed(f"plotting_data/bands_repulsivesmall/order.npz", order = np.array(order_parameters, dtype = np.float16), steady_reached = np.array(steady_reached, dtype = np.bool_), steady_time = np.array(steady_time, dtype = np.float16))
+# np.savez_compressed(f"plotting_data/bands_repulsivesmall/clusters.npz", num_clust = np.array(num_clusters_list, dtype = np.float16), particle_clust = np.array(cluster_particles_list, dtype = np.float16))
