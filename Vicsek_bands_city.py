@@ -22,7 +22,7 @@ max_neighbours = N // 2 #  guess a good value, max is N
 
 # initialise positions and angles
 positions = np.random.uniform(0, L, size = (N, 2))
-angles = np.random.uniform(-np.pi, np.pi, size = N) # from 0 to 2pi rad
+angles = np.random.uniform(-np.pi, np.pi, size = N)
 
 # cell list
 cell_size = 1.0 * r0
@@ -31,7 +31,7 @@ total_num_cells = lateral_num_cells ** 2
 max_particles_per_cell = int(rho * cell_size ** 2 * 10)
 
 # average angles and order parameter
-time_step = 10
+time_step = 10 # interval to record data
 angle_time_step = np.empty(time_step)
 angle_t = 0
 average_angles = [] # empty array for average angles
@@ -40,16 +40,16 @@ order_time_step = np.empty(time_step)
 order_t = 0
 order_parameters = [] # empty array for order parameters
 order_data = {} # dictionary for order parameter data
-block_size = 20
+block_size = 20 # for block averaging
 std_threshold = 0.05 # standard deviation threshold for steady state to be reached
 steady_blocks = 5 # consecutive blocks that meet std_threshold criteria
 
-# histogram for average particle density in different areas of the box
+# histogram for average particle density
 bins = int(L / r0)
 hist, xedges, yedges = np.histogram2d(positions[:,0], positions[:,1], bins = bins, density = False)
 
 # clustering
-cluster_threshold = r0
+cluster_threshold = r0 # distance to be within same cluster
 num_clusters_list = [] # empty array for number of clusters
 cluster_particles_list = [] # empty array for average num of particles per cluster
 num_clusters_data = {} # dictionary for cluster data
@@ -67,7 +67,7 @@ barriers = []
 num_barriers = 5
 min_size = 5
 max_size = 15
-gap = 5
+gap = 5 # gap between barriers
 
 # barrier collision avoidance
 turnfactor = np.pi/2
@@ -236,12 +236,11 @@ def velocity_flux(positions, angles, v0):
     tot_vx = np.zeros(positions.shape[0]) # empty array for total velocity x components
     tot_vy = np.zeros(positions.shape[0]) # empty array for total velocity y components
     
-    # calculate x and y velocity flux
     for i in numba.prange(positions.shape[0]):
         tot_vx[i] = v0 * np.cos(angles[i])
         tot_vy[i] = v0 * np.sin(angles[i])
     
-    return tot_vx, tot_vy 
+    return tot_vx, tot_vy
 
 @numba.njit(parallel=True)
 def update(positions, angles, turned, barriers, cell_size, num_cells, max_particles_per_cell):
@@ -371,20 +370,19 @@ def animate(frames):
 # writer = FFMpegWriter(fps = 10, metadata = dict(artist = "Isobel"), bitrate = 1800)
 # anim.save("Vicsek_bands_city.mp4", writer = writer, dpi = 300)
 # plt.show()
-    
-average_angles = [] # initialise average angles array
-order_parameters = [] # intialise order parameter array
-    
-hist = np.empty((len(xedges) - 1, len(yedges) - 1)) # initialise histogram density map
-    
+ 
+# intialise arrays   
+average_angles = []
+order_parameters = []
+hist = np.empty((len(xedges) - 1, len(yedges) - 1))
 num_clusters_list = []
 cluster_particles_list = []
 
+# run animation and update arrays
 for frame in range(0, iterations + 1):
     animate(frame)
           
-    alignment_data = average_angles
-        
+    alignment_data = average_angles 
     order_data = order_parameters
 
 steady_reached, steady_time = steady_state(order_parameters)
