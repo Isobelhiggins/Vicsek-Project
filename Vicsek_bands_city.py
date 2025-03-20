@@ -373,9 +373,9 @@ for barrier_x_start, barrier_x_end, barrier_y_start, barrier_y_end in barriers:
     ax.add_patch(plt.Rectangle((barrier_x_start, barrier_y_start), barrier_x_end - barrier_x_start, barrier_y_end - barrier_y_start, color = "grey", alpha = 0.5))
     ax.add_patch(plt.Rectangle((barrier_x_start - boundary, barrier_y_start - boundary), (barrier_x_end + boundary) - (barrier_x_start - boundary), (barrier_y_end + boundary) - (barrier_y_start - boundary), edgecolor = "grey", fill = False))
 anim = FuncAnimation(fig, animate, frames = range(0, iterations), interval = 5, blit = True)
-writer = FFMpegWriter(fps = 10, metadata = dict(artist = "Isobel"), bitrate = 1800)
-anim.save("simulation_videos/Vicsek_bands_city.mp4", writer = writer, dpi = 300)
-# plt.show()
+# writer = FFMpegWriter(fps = 10, metadata = dict(artist = "Isobel"), bitrate = 1800)
+# anim.save("simulation_videos/Vicsek_bands_city.mp4", writer = writer, dpi = 300)
+plt.show()
  
 # uncomment to save analysis data to npz files for plotting in Vicsek_plotting.ipynb
 

@@ -317,22 +317,30 @@ def animate(frames):
         tot_vy_all += H_vy
         counts_all += counts # hist of number of particles
     
+    # can be commented out if not running the animation and just saving data
     # Update the quiver plot
     qv.set_offsets(positions)
     qv.set_UVC(np.cos(new_angles), np.sin(new_angles), new_angles)
+    
+    # uncomment relevant line to save positions and angles to npz files for plotting in Vicsek_plotting.ipynb
     # np.savez_compressed(f"plotting_data/bands_repulsivebig/pos_ang{frames}.npz", positions = np.array(positions, dtype = np.float16), angles = np.array(angles, dtype = np.float16)) # big barrier
     # np.savez_compressed(f"plotting_data/bands_repulsivesmall/pos_ang{frames}.npz", positions = np.array(positions, dtype = np.float16), angles = np.array(angles, dtype = np.float16)) # small barrier
+    
+    # can be commented out if not running the animation and just saving data
     return qv,
 
+# comment out to hide the animation
 # Vicsek Model for N Particles Animation
 fig, ax = plt.subplots(figsize = (3.5, 3.5)) 
 qv = ax.quiver(positions[:,0], positions[:,1], np.cos(angles), np.sin(angles), angles, clim = [-np.pi, np.pi], cmap = "hsv")
 ax.add_patch(plt.Rectangle((barrier_x_start, barrier_y_start), barrier_x_end - barrier_x_start, barrier_y_end - barrier_y_start, color = "grey", alpha = 0.5))
 ax.add_patch(plt.Rectangle((barrier_x_start - boundary, barrier_y_start - boundary), (barrier_x_end + boundary) - (barrier_x_start - boundary), (barrier_y_end + boundary) - (barrier_y_start - boundary), edgecolor = "grey", fill = False))
 anim = FuncAnimation(fig, animate, frames = range(0, iterations), interval = 5, blit = True)
-writer = FFMpegWriter(fps = 10, metadata = dict(artist = "Isobel"), bitrate = 1800)
-anim.save("simulation_videos/Vicsek_bands_repulsivebig.mp4", writer = writer, dpi = 300)
-# plt.show()
+# writer = FFMpegWriter(fps = 10, metadata = dict(artist = "Isobel"), bitrate = 1800)
+# anim.save("simulation_videos/Vicsek_bands_repulsivebig.mp4", writer = writer, dpi = 300)
+plt.show()
+
+# uncomment to save analysis data to npz files for plotting in Vicsek_plotting.ipynb
 
 # intialise arrays
 # average_angles = []
@@ -355,14 +363,14 @@ anim.save("simulation_videos/Vicsek_bands_repulsivebig.mp4", writer = writer, dp
 # cluster_particles_data = cluster_particles_list
 
 # save to npz files for plotting
-# big barrier
+# for big barrier
 # np.savez_compressed(f"plotting_data/bands_repulsivebig/avg_ang.npz", angles = np.array(average_angles, dtype = np.float16))
 # np.savez_compressed(f"plotting_data/bands_repulsivebig/hist.npz", hist = np.array(hist, dtype = np.float64))
 # np.savez_compressed(f"plotting_data/bands_repulsivebig/flow.npz", vx = np.array(tot_vx_all, dtype = np.float32), vy = np.array(tot_vy_all, dtype = np.float32), counts = np.array(counts_all, dtype = np.float32), vxedges = np.array(vxedges, dtype = np.float32), vyedges = np.array(vyedges, dtype = np.float32))
 # np.savez_compressed(f"plotting_data/bands_repulsivebig/order.npz", order = np.array(order_parameters, dtype = np.float16), steady_reached = np.array(steady_reached, dtype = np.bool_), steady_time = np.array(steady_time, dtype = np.float16))
 # np.savez_compressed(f"plotting_data/bands_repulsivebig/clusters.npz", num_clust = np.array(num_clusters_list, dtype = np.float16), particle_clust = np.array(cluster_particles_list, dtype = np.float16))
 
-# small barrier
+# for small barrier
 # np.savez_compressed(f"plotting_data/bands_repulsivesmall/avg_ang.npz", angles = np.array(average_angles, dtype = np.float16))
 # np.savez_compressed(f"plotting_data/bands_repulsivesmall/hist.npz", hist = np.array(hist, dtype = np.float64))
 # np.savez_compressed(f"plotting_data/bands_repulsivesmall/flow.npz", vx = np.array(tot_vx_all, dtype = np.float32), vy = np.array(tot_vy_all, dtype = np.float32), counts = np.array(counts_all, dtype = np.float32), vxedges = np.array(vxedges, dtype = np.float32), vyedges = np.array(vyedges, dtype = np.float32))
